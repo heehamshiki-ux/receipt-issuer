@@ -65,7 +65,7 @@
 
         /* 달력 본문 숨김/표시 처리용 */
         #calendar-body {
-            display: none; /* 기본 상태: 숨김 */
+            display: none;
         }
 
         .calendar-grid-header {
@@ -230,6 +230,23 @@
             color: #222;
             padding-left: 28px;
             padding-right: 12px;
+            position: relative; /* 삭제 버튼을 왼쪽 여백에 배치하기 위해 추가 */
+        }
+
+        /* 텍스트 형태의 단순한 삭제(x) 버튼 스타일 */
+        .item-delete {
+            position: absolute;
+            left: 6px;
+            top: 0;
+            color: #000;
+            cursor: pointer;
+            font-weight: 500;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        .item-delete:hover {
+            color: #888;
         }
 
         .item-text {
@@ -351,7 +368,6 @@
         let calYear = selectedYear;
         let calMonth = selectedMonth;
 
-        // 달력 열림 상태 변수 추가
         let isCalendarOpen = false;
 
         window.onload = function() {
@@ -365,7 +381,6 @@
             localStorage.setItem('issuerName_v4', issuerName);
         }
 
-        // 달력 토글 함수
         function toggleCalendar() {
             isCalendarOpen = !isCalendarOpen;
             const calBody = document.getElementById('calendar-body');
@@ -375,11 +390,10 @@
             } else {
                 calBody.style.display = 'none';
             }
-            renderCalendar(); // 타이틀 텍스트 업데이트 (화살표 변경 등)
+            renderCalendar(); 
         }
 
         function renderCalendar() {
-            // 달력 열림 상태에 따라 화살표 변경
             const arrow = isCalendarOpen ? ' ▲' : ' ▼';
             document.getElementById('calendar-title').innerText = `${calYear}년 ${calMonth + 1}월` + arrow;
             
@@ -469,6 +483,15 @@
                 const li = document.createElement('li');
                 li.className = 'item';
                 
+                // 삭제 버튼 추가 (발행 전일 때만 노출)
+                if (!dayData.isIssued) {
+                    const deleteBtn = document.createElement('span');
+                    deleteBtn.className = 'item-delete';
+                    deleteBtn.innerText = 'x';
+                    deleteBtn.onclick = function() { deleteItem(index); };
+                    li.appendChild(deleteBtn);
+                }
+                
                 const textSpan = document.createElement('span');
                 textSpan.className = 'item-text' + (!dayData.isIssued ? ' editable-active' : '');
                 textSpan.innerText = item.text;
@@ -491,6 +514,16 @@
             });
 
             document.getElementById('items-count').innerText = dayData.items.length;
+        }
+
+        // 특정 아이템을 삭제하는 함수 추가
+        function deleteItem(index) {
+            const dateKey = `${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}-${String(selectedDay).padStart(2, '0')}`;
+            if (receiptsData[dateKey] && receiptsData[dateKey].items.length > index) {
+                receiptsData[dateKey].items.splice(index, 1);
+                saveData();
+                renderReceipt();
+            }
         }
 
         function addItem() {
